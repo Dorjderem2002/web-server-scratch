@@ -2,6 +2,7 @@
 
 #include "tcpserver.hpp"
 #include <unistd.h>
+#include <unordered_map>
 
 namespace sea
 {
@@ -15,7 +16,18 @@ namespace sea
         void accepter() override;
         void handler() override;
         void responder() override;
-        char m_buffer[3000] = {0};
+        char m_buffer[30000] = {0};
         int m_new_socket;
+
+        bool silent = false;
+
+        std::unordered_map<std::string, std::string> headers = std::unordered_map<std::string, std::string>{
+            {"Server", "Dorj"},
+            {"Content-Type", "text/html"},
+        };
+        std::unordered_map<int, std::string> status_code = std::unordered_map<int, std::string>{
+            {200, "OK"},
+            {404, "Not Found"},
+        };
     };
 }
