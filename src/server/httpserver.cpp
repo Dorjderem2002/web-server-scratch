@@ -1,4 +1,5 @@
 #include "httpserver.hpp"
+#include "httprequest.hpp"
 
 sea::HTTPServer::HTTPServer(int port, int backlog) : TCPServer(port, backlog)
 {
@@ -13,40 +14,58 @@ void sea::HTTPServer::start()
     while (true)
     {
         std::cout << "====== WAITING ======" << std::endl;
-        accepter();
-        handler();
-        responder();
+        int socket_arg = accepter();
+
+        // std::thread pt([this, socket_arg]
+        //                { handle_task(socket_arg); });
+        // pt.join();
+        handle_task(socket_arg);
+        close(socket_arg);
     }
 }
 
-void sea::HTTPServer::accepter()
+int sea::HTTPServer::accepter()
 {
     struct sockaddr_in addr = get_socket().get_address();
     int addrlen = sizeof(addr);
-    m_new_socket = accept(get_socket().get_socket(), (struct sockaddr *)&addr, (socklen_t *)&addrlen);
-    if (m_new_socket < 0)
+    int res_socket = accept(get_socket().get_socket(), (struct sockaddr *)&addr, (socklen_t *)&addrlen);
+    if (res_socket < 0)
     {
         std::cerr << "Can not accept" << std::endl;
         exit(EXIT_FAILURE);
     }
-    read(m_new_socket, m_buffer, sizeof(m_buffer));
+    return res_socket;
 }
 
-void sea::HTTPServer::handler()
+void sea::HTTPServer::handler(int client_socket)
 {
+    read(client_socket, m_buffer, sizeof(m_buffer));
     std::cout << m_buffer << std::endl;
+    sea::HTTPRequest req(m_buffer);
+
+    std::cout << req.uri << std::endl;
+    if (req.method == "GET")
+    {
+    }
+    else
+    {
+    }
 }
 
-void sea::HTTPServer::responder()
+void sea::HTTPServer::responder(int client_socket)
 {
     std::string response_line = build_response_line(200);
     std::string headers = build_headers(nullptr);
     std::string blank_line = "\r\n";
     std::string response_body = "<html><h1>RESPECT<h1></html>";
     std::string final_response = response_line + headers + blank_line + response_body;
+    write(client_socket, final_response.c_str(), final_response.size());
+}
 
-    write(m_new_socket, final_response.c_str(), final_response.size());
-    close(m_new_socket);
+void sea::HTTPServer::handle_task(int client_sock)
+{
+    handler(client_sock);
+    responder(client_sock);
 }
 
 std::string sea::HTTPServer::build_response(std::string body)

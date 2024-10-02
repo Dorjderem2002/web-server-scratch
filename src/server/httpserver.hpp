@@ -3,6 +3,7 @@
 #include "tcpserver.hpp"
 #include <unistd.h>
 #include <unordered_map>
+#include <thread>
 
 namespace sea
 {
@@ -13,11 +14,13 @@ namespace sea
         void start() override;
 
     private:
-        void accepter() override;
-        void handler() override;
-        void responder() override;
+        int accepter() override;
+        void handler(int client_socket) override;
+        void responder(int client_socket) override;
+
+        void handle_task(int client_sock);
+
         char m_buffer[30000] = {0};
-        int m_new_socket;
 
         bool m_silent = false;
 
@@ -28,6 +31,7 @@ namespace sea
         std::unordered_map<int, std::string> m_status_code = std::unordered_map<int, std::string>{
             {200, "OK"},
             {404, "Not Found"},
+            {501, "Not Implemented"},
         };
 
         std::string build_response_line(int status_code);

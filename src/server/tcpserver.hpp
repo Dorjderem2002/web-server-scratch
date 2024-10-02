@@ -16,8 +16,8 @@ namespace sea
     private:
         std::unique_ptr<ListenSocket> m_socket;
 
-        virtual void accepter() = 0;
-        virtual void handler() = 0;
-        virtual void responder() = 0;
+        virtual int accepter() = 0;
+        virtual void handler(int client_socket) = 0;
+        virtual void responder(int client_socket) = 0;
     };
 }
